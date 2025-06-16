@@ -1,32 +1,43 @@
-import re
+from datetime import datetime
+
 
 def is_valid_date(date_str):
-    # Основные компоненты
-    day = r'(0?[1-9]|[12][0-9]|3[01])'
-    month_num = r'(0?[1-9]|1[0-2])'
-    year = r'\d+'
-    month_rus = r'(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)'
-    month_eng = r'(January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)'
+    months_ru = {
+        'января': 1, 'февраля': 2, 'марта': 3, 'апреля': 4,
+        'мая': 5, 'июня': 6, 'июля': 7, 'августа': 8,
+        'сентября': 9, 'октября': 10, 'ноября': 11, 'декабря': 12
+    }
 
-    separators = [
-        (r'\.', r'\.'),  # точка
-        (r'/', r'/'),  # слэш
-        (r'-', r'-')  # дефис
+    date_formats = [
+        '%d.%m.%Y', '%d/%m/%Y', '%d-%m-%Y',
+        '%Y.%m.%d', '%Y/%m/%d', '%Y-%m-%d',
+        '%B %d, %Y', '%b %d, %Y',
+        '%Y, %B %d', '%Y, %b %d',
     ]
 
-    num_patterns = [rf'^{day}{i}{month_num}{j}{year}$' for i, j in separators]
-    num_patterns += [rf'^{year}{i}{month_num}{j}{day}$' for i, j in separators]
+    for fmt in date_formats:
+        try:
+            date_obj = datetime.strptime(date_str, fmt)
+            if date_obj.year >= 0:
+                return True
+        except ValueError:
+            continue
+
+    parts = date_str.split()
+    if len(parts) == 3:
+        try:
+            day = int(parts[0])
+            month_ru = parts[1]
+            year = int(parts[2])
+
+            if month_ru in months_ru and year >= 0:
+                month = months_ru[month_ru]
+                datetime(year=year, month=month, day=day)
+                return True
+        except (ValueError, KeyError):
+            pass
+
+    return False
 
 
-    # Все шаблоны
-    patterns = num_patterns + [
-        # Текстовые форматы
-        rf'^{day}\s+{month_rus}\s+{year}$',
-        rf'^{month_eng}\s+{day},\s+{year}$',
-        rf'^{year},\s+{month_eng}\s+{day}$'
-    ]
-
-    return any(re.fullmatch(p, date_str) for p in patterns)
-
-
-print(is_valid_date(input("Введите дату для теста --> ")))
+print(is_valid_date(input("Введите дату --> ")), sep="\n")
